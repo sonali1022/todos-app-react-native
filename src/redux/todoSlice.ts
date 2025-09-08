@@ -16,7 +16,7 @@ export const fetchTodos = createAsyncThunk("todo/fetchTodos", async () => {
 
 interface TodoState {
   todos: Todo[];
-  filter: "All" | "Completed" | "Pending";
+  filter: "All" | "Completed" | "Active";
   order: "ASC" | "DESC";
   loading: boolean;
 }
@@ -60,7 +60,7 @@ const todoSlice = createSlice({
     deleteTodo: (state, action: PayloadAction<string>) => {
       state.todos = state.todos.filter(t => t.id !== action.payload);
     },
-    setFilter: (state, action: PayloadAction<"All" | "Completed" | "Pending">) => {
+    setFilter: (state, action: PayloadAction<"All" | "Completed" | "Active">) => {
       state.filter = action.payload;
     },
     toggleAll: (state) => {

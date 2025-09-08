@@ -2,7 +2,8 @@ import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import MainScreen from "../screens/MainScreen";
-import TodoListScreen from "../screens/TodoListScreen";
+import AddTodoScreen from "../screens/AddTodoScreen";
+import EditTodoScreen from "../screens/EditTodoScreen"; // we’ll create this in step 2
 
 export type RootStackParamList = {
   Main: undefined;
@@ -17,8 +18,8 @@ export default function AppNavigator() {
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Main">
         <Stack.Screen name="Main" component={MainScreen} />
-        <Stack.Screen name="AddTodo" component={TodoListScreen} />
-        {/* You can add EditTodo later if needed */}
+        <Stack.Screen name="AddTodo" component={AddTodoScreen} />
+        <Stack.Screen name="EditTodo" component={EditTodoScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

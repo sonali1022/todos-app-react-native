@@ -17,11 +17,12 @@ import {
   addTodo,
   toggleTodo,
   deleteTodo,
-  updateTodo,
   setFilter,
   fetchTodos,
 } from "../redux/todoSlice";
+import TodoItem from "../components/TodoItem";
 import { MaterialIcons as Icon } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 
 // Enable LayoutAnimation for Android
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -31,10 +32,9 @@ if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental
 export default function MainScreen() {
   const { todos, filter, loading } = useSelector((state: RootState) => state.todo);
   const dispatch = useDispatch<AppDispatch>();
+  const navigation = useNavigation<any>();
 
   const [newTodo, setNewTodo] = useState("");
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editText, setEditText] = useState("");
   const [sortBy, setSortBy] = useState<"ID" | "Recent">("ID");
   const [search, setSearch] = useState("");
 
@@ -47,7 +47,7 @@ export default function MainScreen() {
     let list = todos;
 
     if (filter === "Completed") list = list.filter(t => t.completed);
-    else if (filter === "Pending") list = list.filter(t => !t.completed);
+    else if (filter === "Active") list = list.filter(t => !t.completed);
 
     if (search.trim()) {
       list = list.filter(t => t.title.toLowerCase().includes(search.toLowerCase()));
@@ -66,14 +66,7 @@ export default function MainScreen() {
     setNewTodo("");
   };
 
-  const handleUpdate = (id: string) => {
-    if (!editText.trim()) return;
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    dispatch(updateTodo({ id, title: editText.trim() }));
-    setEditingId(null);
-    setEditText("");
-  };
-
+  const handleToggle = (id: string) => dispatch(toggleTodo(id));
   const handleDelete = (id: string) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     dispatch(deleteTodo(id));
@@ -82,42 +75,8 @@ export default function MainScreen() {
   if (loading)
     return <ActivityIndicator size="large" color="#fff" style={{ flex: 1, justifyContent: "center" }} />;
 
-  const renderItem = ({ item }: { item: typeof todos[0] }) => (
-    <View style={styles.todoRow}>
-      {editingId === item.id ? (
-        <>
-          <TextInput style={styles.editInput} value={editText} onChangeText={setEditText} />
-          <TouchableOpacity onPress={() => handleUpdate(item.id)}>
-            <Icon name="check-circle" size={26} color="#4CAF50" />
-          </TouchableOpacity>
-        </>
-      ) : (
-        <>
-          <View style={{ flex: 1 }}>
-            <Text
-              style={[styles.todoText, item.completed && styles.completed]}
-              onPress={() => dispatch(toggleTodo(item.id))}
-            >
-              {item.title}
-            </Text>
-            <Text style={styles.subText}>
-              Created: {new Date(item.created_at).toLocaleString()} | Updated: {new Date(item.updated_at).toLocaleString()}
-            </Text>
-          </View>
-          <TouchableOpacity onPress={() => { setEditingId(item.id); setEditText(item.title); }}>
-            <Icon name="edit" size={22} color="#2196F3" />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => handleDelete(item.id)}>
-            <Icon name="delete" size={22} color="#F44336" />
-          </TouchableOpacity>
-        </>
-      )}
-    </View>
-  );
-
   return (
     <View style={styles.container}>
-
       {/* Search Bar */}
       <TextInput
         style={styles.searchInput}
@@ -141,9 +100,9 @@ export default function MainScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Filter & Sort Buttons */}
+      {/* Filter & Sort */}
       <View style={styles.filterRow}>
-        {["All", "Pending", "Completed"].map(f => (
+        {["All", "Active", "Completed"].map(f => (
           <TouchableOpacity
             key={f}
             onPress={() => dispatch(setFilter(f as any))}
@@ -165,11 +124,18 @@ export default function MainScreen() {
       <FlatList
         data={filteredTodos}
         keyExtractor={item => item.id}
-        renderItem={renderItem}
+        renderItem={({ item }) => (
+          <TodoItem
+            todo={item}
+            onToggle={() => handleToggle(item.id)}
+            onDelete={() => handleDelete(item.id)}
+            onEdit={() => navigation.navigate("EditTodo", { id: item.id })}
+          />
+        )}
         contentContainerStyle={{ paddingBottom: 100 }}
       />
 
-      {/* Todo counts */}
+      {/* Counts */}
       <Text style={styles.countText}>
         Total: {todos.length} | Completed: {todos.filter(t => t.completed).length}
       </Text>
@@ -212,24 +178,5 @@ const styles = StyleSheet.create({
   sortBtn: { backgroundColor: "#333" },
   activeBtn: { backgroundColor: "#4CAF50", borderColor: "#4CAF50" },
   filterText: { color: "#fff", fontWeight: "600" },
-  todoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
-    backgroundColor: "#1E1E1E",
-    borderRadius: 12,
-    padding: 10,
-  },
-  todoText: { flex: 1, color: "#fff", fontSize: 16 },
-  subText: { fontSize: 11, color: "#AAA", marginTop: 2 },
-  completed: { textDecorationLine: "line-through", color: "#888" },
-  editInput: {
-    flex: 1,
-    padding: 10,
-    backgroundColor: "#2A2A2A",
-    color: "#fff",
-    borderRadius: 10,
-    marginRight: 8,
-  },
   countText: { color: "#fff", marginTop: 10, fontWeight: "bold", textAlign: "center" },
 });
